@@ -1243,17 +1243,19 @@ function renderModule(module) {
 
 function renderSubtab(module, subtab) {
   if (module === 'formacion') {
-    if (subtab === 'personas')    renderPersonas();
+    if (subtab === 'personas')         renderPersonas();
     else if (subtab === 'actividades') renderActividades();
-    else if (subtab === 'rutas')  renderRutas();
-    else if (subtab === 'alertas') renderAlertas();
-  } else if (module === 'admin') {
-    if (subtab === 'diccionario')  renderDiccionario();
-    else if (subtab === 'usuarios') renderUsuariosAdmin();
+    else if (subtab === 'rutas')       renderRutas();
+    else if (subtab === 'alertas')     renderAlertas();
+  } else if (module === 'admin') { // Corregido: era 'Configuraciones'
+    if (subtab === 'diccionario')      renderDiccionario();
+    else if (subtab === 'usuarios')    renderUsuariosAdmin();
     else if (subtab === 'configuracion') renderConfiguracion();
+  } else if (module === 'comunicaciones') { // Corregido: minúscula
+    if (subtab === 'listas')           renderComunicaciones();
   } else if (module === 'desarrollo') {
-    if (subtab === 'dashboard')  renderDesarrolloDashboard();
-    else if (subtab === 'activacion') renderActivacion();
+    if (subtab === 'dashboard')        renderDesarrolloDashboard();
+    else if (subtab === 'activacion')  renderActivacion();
   }
 }
 
@@ -2125,15 +2127,24 @@ async function openCargarAsistencia(actividadId) {
 async function procesarAsistencia(actividadId) {
   const texto = document.getElementById('asistenciaTexto').value.trim();
   const sesionId = document.getElementById('sesionSelect').value;
-  if (!texto) { toast('Pega la lista primero', 'error'); return; }
+  if (!texto) { toast('Pega los datos de la planilla primero', 'error'); return; }
 
-  const lineas = texto.split('\n').map(l=>l.trim()).filter(Boolean);
+  // Detectar si los datos vienen de Excel/Sheets (separados por Tab) o CSV (separados por coma)
+  const separador = texto.includes('\t') ? '\t' : ',';
+  
+  const lineas = texto.split('\n').map(l => l.trim()).filter(Boolean);
   const registros = lineas.map(l => {
-    const partes = l.split(',').map(p=>p.trim());
-    return { raw: l, nombre: partes[0]||'', email: partes[1]||'', telefono: partes[2]||'' };
+    const partes = l.split(separador).map(p => p.trim());
+    // Asume orden de planilla: Nombre/Apellidos | Email | Teléfono
+    return { 
+      raw: l, 
+      nombre: partes[0] || '', 
+      email: partes[1] || '', 
+      telefono: partes[2] || '' 
+    };
   });
 
-  // Match contra personas en cache
+  // El resto de la lógica de Match (permanece igual)
   const matches = registros.map(r => {
     const emailMatch = PERSONAS_CACHE.find(p => p.email && p.email.toLowerCase() === r.email.toLowerCase());
     const nameMatch = PERSONAS_CACHE.find(p => {
@@ -2149,7 +2160,6 @@ async function procesarAsistencia(actividadId) {
   const revisar   = matches.filter(m => m.confianza >= 40 && m.confianza < 85).length;
   const nuevos    = matches.filter(m => m.confianza < 40).length;
 
-  // Mostrar paso 2
   document.getElementById('asistenciaModalBody').innerHTML = `
     <div style="background:var(--ip-navy-dark);border:1px solid var(--ip-navy-light);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-family:var(--font-mono);font-size:11px">
       Auto-vinculados: <span style="color:var(--ip-green)">${autoMatch}</span> · 
@@ -2165,9 +2175,9 @@ async function procesarAsistencia(actividadId) {
           <span class="mono text-muted">${m.email}</span>
         </div>
         ${m.match ? `<div style="font-size:11px;color:var(--ip-text-muted)">
-          Match: <strong style="color:var(--ip-white)">${m.match.nombre} ${m.match.apellido}</strong> 
+          Match sugerido: <strong style="color:var(--ip-white)">${m.match.nombre} ${m.match.apellido}</strong> 
           (${m.confianza}% confianza)
-        </div>` : `<div style="font-size:11px;color:var(--ip-blue-accent)">Sin match — se creará como nueva persona</div>`}
+        </div>` : `<div style="font-size:11px;color:var(--ip-blue-accent)">Sin match — se creará automáticamente como nueva persona</div>`}
         <input type="hidden" class="match-persona-id" data-idx="${i}" value="${m.match?.id||''}">
         <input type="hidden" class="match-email" data-idx="${i}" value="${m.email}">
         <input type="hidden" class="match-nombre" data-idx="${i}" value="${m.nombre}">
@@ -2176,7 +2186,7 @@ async function procesarAsistencia(actividadId) {
 
   document.querySelector('.modal-footer').innerHTML = `
     <button class="btn btn-secondary" onclick="this.closest('.modal-backdrop').remove()">Cancelar</button>
-    <button class="btn btn-success" onclick="confirmarAsistencia('${sesionId}')">✓ Confirmar todas las participaciones</button>`;
+    <button class="btn btn-success" onclick="confirmarAsistencia('${sesionId}')">✓ Confirmar Asistencias</button>`;
 }
 
 async function confirmarAsistencia(sesionId) {
@@ -2726,6 +2736,155 @@ async function agregarSede() {
   await loadSedes();
   renderConfiguracion();
 }
+
+
+// ================================================================
+// MÓDULO COMUNICACIONES — GENERADOR DE LISTAS HUBSPOT
+// ================================================================
+async function renderComunicaciones() {
+  const el = document.getElementById('appContent');
+  
+  // Obtener todas las personas no retiradas
+  const { data: personas } = await db.from('personas').select(`
+    *,
+    persona_sede(sedes(nombre)),
+    persona_ruta(rutas(nombre))
+  `).eq('retirado', false);
+
+  window._comunicacionesData = personas || [];
+
+  el.innerHTML = `
+    <div class="page-header">
+      <div class="page-header-inner">
+        <div class="page-title-block">
+          <div class="page-title">Comunicaciones</div>
+          <div class="page-date">Generador de Listas para HubSpot</div>
+        </div>
+      </div>
+    </div>
+    <div class="content-wrap" style="display: flex; gap: 24px; margin-top: 24px;">
+      
+      <div style="width: 300px; background: var(--ip-navy-mid); padding: 20px; border-radius: 8px; border: 1px solid var(--ip-navy-light); flex-shrink: 0;">
+        <div class="form-section-divider" style="margin-top: 0; color: var(--ip-orange)">Filtros de Segmentación</div>
+        
+        <div class="form-group mb-12">
+          <label class="form-label">Rol</label>
+          <select class="form-select" id="hubRol" onchange="filtrarHubspot()">
+            <option value="">Todos</option>
+            ${DICCIONARIO.roles_persona.map(r=>`<option value="${r}">${r}</option>`).join('')}
+          </select>
+        </div>
+        
+        <div class="form-group mb-12">
+          <label class="form-label">Estado</label>
+          <select class="form-select" id="hubEstado" onchange="filtrarHubspot()">
+            <option value="">Todos</option>
+            ${DICCIONARIO.estados_persona.map(e=>`<option value="${e}">${e}</option>`).join('')}
+          </select>
+        </div>
+
+        <div class="form-group mb-12">
+          <label class="form-label">Consentimiento (Requerido)</label>
+          <select class="form-select" id="hubConsentimiento" onchange="filtrarHubspot()">
+            <option value="true" selected>Solo con consentimiento</option>
+            <option value="">Todos (No recomendado)</option>
+          </select>
+        </div>
+
+        <div class="form-group mt-16">
+          <label class="form-label">Nombre de la lista</label>
+          <input type="text" class="form-input" id="hubListName" value="COMMS_LISTA_${new Date().toISOString().split('T')[0]}">
+        </div>
+        
+        <button class="btn btn-primary mt-12" style="width: 100%; background: var(--ip-orange); color: var(--ip-white)" onclick="exportarHubspot()">
+          ⬇ Exportar CSV para HubSpot
+        </button>
+      </div>
+
+      <div style="flex: 1;">
+        <div class="flex-between mb-12">
+          <strong style="font-size: 16px;">Vista Previa</strong>
+          <span class="chip chip-orange" id="hubCount">${window._comunicacionesData.filter(p=>p.consentimiento_comunicaciones).length} contactos</span>
+        </div>
+        <table class="data-table">
+          <thead><tr><th>Email</th><th>Nombre</th><th>Apellidos</th><th>Rol</th><th>Sede</th></tr></thead>
+          <tbody id="hubPreviewBody">
+            </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+  filtrarHubspot();
+}
+
+function filtrarHubspot() {
+  const rol = document.getElementById('hubRol').value;
+  const estado = document.getElementById('hubEstado').value;
+  const reqConsent = document.getElementById('hubConsentimiento').value === 'true';
+
+  const filtrados = window._comunicacionesData.filter(p => {
+    if (rol && p.rol_persona !== rol) return false;
+    if (estado && p.estado !== estado) return false;
+    if (reqConsent && !p.consentimiento_comunicaciones) return false;
+    if (!p.email) return false; // HubSpot requiere email
+    return true;
+  });
+
+  window._hubspotFiltered = filtrados;
+  document.getElementById('hubCount').textContent = `${filtrados.length} contactos listos`;
+
+  const tbody = document.getElementById('hubPreviewBody');
+  tbody.innerHTML = filtrados.slice(0, 10).map(p => `
+    <tr>
+      <td class="mono">${p.email}</td>
+      <td>${p.nombre}</td>
+      <td>${p.apellido}</td>
+      <td><span class="chip chip-muted">${p.rol_persona || '—'}</span></td>
+      <td>${p.persona_sede?.[0]?.sedes?.nombre || '—'}</td>
+    </tr>
+  `).join('');
+  
+  if(filtrados.length > 10) {
+    tbody.innerHTML += `<tr><td colspan="5" style="text-align:center; color: var(--ip-text-muted)">... y ${filtrados.length - 10} más</td></tr>`;
+  }
+}
+
+function exportarHubspot() {
+  const data = window._hubspotFiltered || [];
+  if (!data.length) { toast('No hay datos para exportar', 'error'); return; }
+
+  // Mapeo exacto de columnas HubSpot requerido por el spec
+  const cabeceras = ["Email", "First Name", "Last Name", "Phone", "Contact Type", "Lifecycle Stage", "Sede", "Tags"];
+  
+  const filas = data.map(p => {
+    const sede = p.persona_sede?.[0]?.sedes?.nombre || '';
+    const tags = (p.tags || []).join(';');
+    return [
+      p.email,
+      p.nombre,
+      p.apellido,
+      p.telefono || '',
+      p.rol_persona || '',
+      p.estado || '',
+      sede,
+      tags
+    ].map(v => `"${(v||'').toString().replace(/"/g, '""')}"`).join(',');
+  });
+
+  const csvContent = [cabeceras.join(','), ...filas].join('\n');
+  const blob = new Blob(["\ufeff", csvContent], { type: 'text/csv;charset=utf-8;' }); // \ufeff para forzar UTF-8 en Excel
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  
+  link.setAttribute("href", url);
+  link.setAttribute("download", `${document.getElementById('hubListName').value}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  
+  toast('CSV generado correctamente para HubSpot', 'success');
+}
+
 
 // ================================================================
 // AUTH

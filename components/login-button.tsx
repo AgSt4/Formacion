@@ -20,7 +20,7 @@ export function LoginButton() {
       provider: "google",
       options: {
         skipBrowserRedirect: true,
-        redirectTo: `${origin}/auth/callback`,
+        redirectTo: `${origin}/auth/confirm`,
         queryParams: {
           access_type: "offline",
           prompt: "select_account"

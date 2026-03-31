@@ -1,56 +1,56 @@
-import { AlertTriangle, Database, Users } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, BookUser, GraduationCap, Users } from "lucide-react";
 
-import { DashboardStatCard } from "@/components/dashboard-stat-card";
-import { createClient } from "@/lib/supabase/server";
-
-export default async function DashboardPage() {
-  const supabase = await createClient();
-
-  const [{ count: personasCount }, { count: perfilesCount }, { count: pendientesCount }] = await Promise.all([
-    supabase.from("dim_personas").select("*", { count: "exact", head: true }),
-    supabase.from("perfiles_usuarios").select("*", { count: "exact", head: true }),
-    supabase.from("personas_raw").select("*", { count: "exact", head: true }).eq("procesado", false)
-  ]);
-
+export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <h1 className="font-heading text-4xl text-navy">Resumen institucional</h1>
+        <h1 className="font-heading text-4xl text-navy">Resumen operativo</h1>
         <p className="max-w-3xl text-base text-stone-600">
-          Vista inicial del sistema de inteligencia institucional, alineada al modelo Golden Record y a los perfiles de
-          acceso.
+          Base simple del sistema para mover personas como activos entre directorio, formación y administración.
         </p>
       </div>
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <DashboardStatCard
-          label="Golden Records"
-          value={personasCount ?? 0}
-          description="Personas consolidadas en la dimensión maestra."
-          icon={<Database className="h-5 w-5" />}
-        />
-        <DashboardStatCard
-          label="Usuarios activos"
-          value={perfilesCount ?? 0}
-          description="Perfiles institucionales gestionados desde Supabase."
-          icon={<Users className="h-5 w-5" />}
-          accent="forest"
-        />
-        <DashboardStatCard
-          label="Pendientes de revisión"
-          value={pendientesCount ?? 0}
-          description="Entradas de personas_raw que requieren validación administrativa."
-          icon={<AlertTriangle className="h-5 w-5" />}
-          accent="amber"
-        />
-      </section>
-
-      <section className="rounded-3xl border border-stone-200 bg-white p-6 shadow-sm">
-        <h2 className="font-heading text-2xl text-navy">Criterio operativo</h2>
-        <p className="mt-3 max-w-3xl leading-7 text-stone-600">
-          Esta versión privilegia estabilidad, acceso seguro y lectura clara del modelo de datos. Los módulos de
-          Formación, Desarrollo y Estudios quedan visibles según el área y el rol del usuario autenticado.
-        </p>
+      <section className="grid gap-4 md:grid-cols-3">
+        {[
+          {
+            href: "/dashboard/personas",
+            title: "Directorio",
+            description: "Buscar personas y detectar registros pendientes.",
+            icon: BookUser
+          },
+          {
+            href: "/dashboard/formacion",
+            title: "Formación",
+            description: "Gestionar asistencia y visualizar rutas formativas.",
+            icon: GraduationCap
+          },
+          {
+            href: "/dashboard/usuarios",
+            title: "Usuarios",
+            description: "Ver roles y activación del equipo.",
+            icon: Users
+          }
+        ].map((item) => {
+          const Icon = item.icon;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="rounded-3xl border border-stone-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5"
+            >
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-navy/5 text-navy">
+                <Icon className="h-5 w-5" />
+              </div>
+              <h2 className="mt-4 font-heading text-2xl text-navy">{item.title}</h2>
+              <p className="mt-2 text-sm text-stone-600">{item.description}</p>
+              <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-navy">
+                Abrir
+                <ArrowRight className="h-4 w-4" />
+              </span>
+            </Link>
+          );
+        })}
       </section>
     </div>
   );

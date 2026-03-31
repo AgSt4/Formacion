@@ -2,6 +2,8 @@ import type { NextRequest } from "next/server";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 
+export const runtime = "nodejs";
+
 type CookieToSet = {
   name: string;
   value: string;
@@ -11,8 +13,7 @@ type CookieToSet = {
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
-  const next = url.searchParams.get("next") ?? "/dashboard/personas";
-  const redirectResponse = NextResponse.redirect(new URL(next, url.origin));
+  const redirectResponse = NextResponse.redirect(new URL("/dashboard/personas", url.origin));
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;

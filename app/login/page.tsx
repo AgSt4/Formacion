@@ -1,10 +1,23 @@
 import { Building2 } from "lucide-react";
+import { redirect } from "next/navigation";
 
+import { LoginRedirectGate } from "@/components/login-redirect-gate";
 import { LoginButton } from "@/components/login-button";
+import { createClient } from "@/lib/supabase/server";
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  const supabase = await createClient();
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+
+  if (user) {
+    redirect("/dashboard/personas");
+  }
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-cream px-6 py-16">
+      <LoginRedirectGate />
       <section className="w-full max-w-md rounded-3xl border border-stone-200 bg-white p-8 shadow-card">
         <div className="mb-8 flex items-center gap-3 text-navy">
           <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-navy text-white">

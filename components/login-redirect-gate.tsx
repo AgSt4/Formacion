@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
+import { hydrateSessionFromHash } from "@/lib/supabase/client-auth";
 import { createClient } from "@/lib/supabase/client";
 
 export function LoginRedirectGate() {
@@ -11,12 +12,15 @@ export function LoginRedirectGate() {
   useEffect(() => {
     const supabase = createClient();
 
-    supabase.auth.getSession().then(({ data }) => {
+    hydrateSessionFromHash(supabase)
+      .catch(() => false)
+      .then(() => supabase.auth.getSession())
+      .then(({ data }) => {
       if (data.session) {
         router.replace("/dashboard/personas");
         router.refresh();
       }
-    });
+      });
 
     const {
       data: { subscription }

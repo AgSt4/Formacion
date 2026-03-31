@@ -2,13 +2,24 @@
 
 type MinimalSupabaseClient = {
   auth: {
+    exchangeCodeForSession: (code: string) => Promise<unknown>;
     setSession: (session: { access_token: string; refresh_token: string }) => Promise<unknown>;
   };
 };
 
-export async function hydrateSessionFromHash(supabase: MinimalSupabaseClient) {
+export async function hydrateSessionFromUrl(supabase: MinimalSupabaseClient) {
   if (typeof window === "undefined") {
     return false;
+  }
+
+  const url = new URL(window.location.href);
+  const code = url.searchParams.get("code");
+
+  if (code) {
+    await supabase.auth.exchangeCodeForSession(code);
+    url.searchParams.delete("code");
+    window.history.replaceState({}, document.title, `${url.pathname}${url.search}${url.hash}`);
+    return true;
   }
 
   const hash = window.location.hash.startsWith("#") ? window.location.hash.slice(1) : window.location.hash;
@@ -30,7 +41,6 @@ export async function hydrateSessionFromHash(supabase: MinimalSupabaseClient) {
     refresh_token: refreshToken
   });
 
-  const cleanUrl = `${window.location.origin}${window.location.pathname}${window.location.search}`;
-  window.history.replaceState({}, document.title, cleanUrl);
+  window.history.replaceState({}, document.title, `${url.pathname}${url.search}`);
   return true;
 }

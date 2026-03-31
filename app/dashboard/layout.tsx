@@ -7,7 +7,7 @@ import { useEffect, useMemo, useState } from "react";
 import { BookUser, DoorOpen, GraduationCap, LayoutDashboard, LogOut, UserCog } from "lucide-react";
 
 import { AccessPendingCard } from "@/components/access-pending-card";
-import { hydrateSessionFromHash } from "@/lib/supabase/client-auth";
+import { hydrateSessionFromUrl } from "@/lib/supabase/client-auth";
 import { createClient } from "@/lib/supabase/client";
 
 type DashboardLayoutProps = {
@@ -35,7 +35,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     const supabase = createClient();
 
     async function bootstrap() {
-      await hydrateSessionFromHash(supabase).catch(() => false);
+      await hydrateSessionFromUrl(supabase).catch(() => false);
 
       const {
         data: { user }

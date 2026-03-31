@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-import { hydrateSessionFromHash } from "@/lib/supabase/client-auth";
+import { hydrateSessionFromUrl } from "@/lib/supabase/client-auth";
 import { createClient } from "@/lib/supabase/client";
 
 export function LoginRedirectGate() {
@@ -12,7 +12,7 @@ export function LoginRedirectGate() {
   useEffect(() => {
     const supabase = createClient();
 
-    hydrateSessionFromHash(supabase)
+    hydrateSessionFromUrl(supabase)
       .catch(() => false)
       .then(() => supabase.auth.getSession())
       .then(({ data }) => {

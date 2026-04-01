@@ -1,5 +1,11 @@
 import { FormacionBoard } from "@/components/formacion-board";
 
-export default function FormacionRutaPage() {
-  return <FormacionBoard />;
+type RutaPageProps = {
+  params: {
+    id: string;
+  };
+};
+
+export default function RutaPage({ params }: RutaPageProps) {
+  return <FormacionBoard routeId={params.id} />;
 }

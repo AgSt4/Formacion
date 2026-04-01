@@ -3,26 +3,30 @@
 import { useState } from "react";
 import { Chrome, LoaderCircle, LogIn } from "lucide-react";
 
-import { createClient } from "@/lib/supabase/client";
+import { getSupabaseBrowserClient, hasSupabaseEnv } from "@/lib/supabase/client";
 
 export function LoginButton() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   async function handleLogin() {
+    if (!hasSupabaseEnv()) {
+      setErrorMessage("Faltan variables de entorno de Supabase en Vercel o en desarrollo.");
+      return;
+    }
+
     setIsLoading(true);
     setErrorMessage(null);
 
-    const supabase = createClient();
+    const supabase = getSupabaseBrowserClient();
     const origin = window.location.origin;
 
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         skipBrowserRedirect: true,
-        redirectTo: `${origin}/dashboard/personas`,
+        redirectTo: `${origin}/auth/complete`,
         queryParams: {
-          access_type: "offline",
           prompt: "select_account"
         }
       }
@@ -57,7 +61,7 @@ export function LoginButton() {
       </button>
 
       {errorMessage ? (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
           {errorMessage}
         </div>
       ) : null}

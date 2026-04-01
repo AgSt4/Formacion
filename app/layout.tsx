@@ -16,8 +16,8 @@ const sourceSans = Source_Sans_3({
 });
 
 export const metadata: Metadata = {
-  title: "IdeaPaís | Backoffice",
-  description: "Backoffice analítico para IdeaPaís"
+  title: "IdeaPais | Backoffice",
+  description: "Backoffice institucional para IdeaPais"
 };
 
 export default function RootLayout({
@@ -27,7 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" className={`${playfair.variable} ${sourceSans.variable}`}>
-      <body>{children}</body>
+      <body className="min-h-screen bg-cream text-ink">{children}</body>
     </html>
   );
 }

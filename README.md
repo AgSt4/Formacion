@@ -1,26 +1,32 @@
-# IdeaPaís Backoffice
+# IdeaPais Backoffice
 
-Aplicación interna construida con Next.js 14, Tailwind CSS y Supabase SSR.
+Base minima y estable para IdeaPais sobre Next.js App Router, Tailwind y Supabase.
 
-## Puesta en marcha
+## Foco de esta version
 
-1. Verifica las variables en `.env.local`.
-2. Instala dependencias con `npm install`.
-3. Ejecuta `npm run dev`.
+- Login Google estable y explicito.
+- Sesion persistente en cliente con Supabase JS.
+- Validacion de acceso contra `perfiles_usuarios`.
+- Pantalla clara de acceso pendiente.
+- Primera fase enfocada en dashboard, personas, formacion y usuarios.
 
-## Supabase
+## Variables de entorno
 
-- Auth: Google OAuth vía Supabase.
-- Perfil y permisos: tabla `perfiles_usuarios`.
-- Golden Record: tablas `dim_personas` y `personas_raw`.
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
-## Módulos incluidos
+## Rutas principales
 
 - `/login`
+- `/auth/complete`
 - `/dashboard`
 - `/dashboard/personas`
-- `/dashboard/jd-jp`
-- `/dashboard/usuarios`
 - `/dashboard/formacion`
-- `/dashboard/desarrollo`
-- `/dashboard/estudios`
+- `/dashboard/formacion/asistencia`
+- `/dashboard/formacion/rutas/[id]`
+- `/dashboard/usuarios`
+
+## Documentacion
+
+- `docs/arquitectura-fase-1.md`
+- `docs/vercel-supabase-deploy.md`

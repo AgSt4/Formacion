@@ -11,25 +11,19 @@ const config: Config = {
       colors: {
         cream: "#F6F4EF",
         navy: "#1B2A4A",
-        ink: "#1A1916",
-        amber: "#B45C10",
-        forest: "#2D5A3D"
+        ink: "#1E2430",
+        sand: "#E6E0D3",
+        muted: "#6B7280",
+        success: "#2D6A4F",
+        danger: "#A63A50",
+        warning: "#C0841A"
       },
       fontFamily: {
         heading: ["var(--font-playfair)"],
         body: ["var(--font-source-sans)"]
       },
       boxShadow: {
-        card: "0 10px 30px -18px rgba(27, 42, 74, 0.22)"
-      },
-      keyframes: {
-        pulseRing: {
-          "0%, 100%": { transform: "scale(1)", opacity: "0.95" },
-          "50%": { transform: "scale(1.35)", opacity: "0.35" }
-        }
-      },
-      animation: {
-        "pulse-ring": "pulseRing 1.8s ease-in-out infinite"
+        card: "0 18px 50px -28px rgba(27, 42, 74, 0.28)"
       }
     }
   },
